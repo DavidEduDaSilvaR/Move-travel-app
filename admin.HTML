@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Move Travel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-800 text-white font-sans p-10">
+
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">🛠️ Panel de Control</h1>
+            <a href="index.html" class="text-blue-400 hover:text-blue-300">← Volver a la Web</a>
+        </div>
+
+        <div class="bg-gray-700 p-6 rounded-lg shadow-xl mb-10">
+            <h2 class="text-xl font-bold mb-4 text-green-400">Agregar Nuevo Viaje</h2>
+            <form id="formViaje" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <input type="text" id="destino" placeholder="Destino (ej: Cancún)" class="bg-gray-600 p-2 rounded border border-gray-500" required>
+                <input type="text" id="pais" placeholder="País" class="bg-gray-600 p-2 rounded border border-gray-500" required>
+                
+                <input type="number" id="precio" placeholder="Precio USD" class="bg-gray-600 p-2 rounded border border-gray-500" required>
+                <input type="number" id="dias" placeholder="Duración (días)" class="bg-gray-600 p-2 rounded border border-gray-500" required>
+                
+                <input type="text" id="imagen" placeholder="URL de la Foto (ej: https://...)" class="bg-gray-600 p-2 rounded border border-gray-500 col-span-2">
+                <textarea id="desc" placeholder="Descripción vendedora..." class="bg-gray-600 p-2 rounded border border-gray-500 col-span-2" rows="3"></textarea>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="aereo" class="w-5 h-5">
+                    <label>Incluye Vuelo ✈️</label>
+                </div>
+
+                <button type="submit" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded col-span-2">
+                    Guardar Viaje
+                </button>
+            </form>
+        </div>
+
+        <h2 class="text-xl font-bold mb-4 text-yellow-400">Inventario Actual</h2>
+        <div id="listaAdmin" class="space-y-3">
+            </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/viajes";
+
+        // 1. CARGAR LISTA
+        async function cargarViajes() {
+            const res = await fetch(API_URL);
+            const viajes = await res.json();
+            const contenedor = document.getElementById('listaAdmin');
+            contenedor.innerHTML = '';
+
+            viajes.forEach(v => {
+                contenedor.innerHTML += `
+                    <div class="bg-gray-600 p-4 rounded flex justify-between items-center">
+                        <div>
+                            <span class="font-bold text-lg">${v.destino}</span> 
+                            <span class="text-sm text-gray-300">(${v.pais}) - $${v.precio_usd}</span>
+                        </div>
+                        <button onclick="borrarViaje(${v.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                            Eliminar 🗑️
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. GUARDAR NUEVO (POST)
+        document.getElementById('formViaje').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Evita que se recargue la página
+
+            const nuevoViaje = {
+                id: 0, // El servidor lo asignará
+                destino: document.getElementById('destino').value,
+                pais: document.getElementById('pais').value,
+                precio_usd: parseFloat(document.getElementById('precio').value),
+                duracion_dias: parseInt(document.getElementById('dias').value),
+                incluye_aereo: document.getElementById('aereo').checked,
+                descripcion: document.getElementById('desc').value,
+                imagen_url: document.getElementById('imagen').value || "https://via.placeholder.com/400"
+            };
+
+            const res = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(nuevoViaje)
+            });
+
+            if (res.ok) {
+                alert("¡Viaje creado!");
+                document.getElementById('formViaje').reset();
+                cargarViajes(); // Recargar la lista
+            } else {
+                alert("Error al guardar");
+            }
+        });
+
+        // 3. BORRAR (DELETE)
+        async function borrarViaje(id) {
+            if(!confirm("¿Seguro que quieres borrar este viaje?")) return;
+
+            const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+            if (res.ok) cargarViajes();
+        }
+
+        // Iniciar
+        cargarViajes();
+    </script>
+</body>
+</html>
