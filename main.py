@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-
+from fastapi.responses import HTMLResponse
 app = FastAPI()
 
 # --- CONFIGURACIÓN DE PERMISOS ---
@@ -72,9 +72,16 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row # Para que los resultados parezcan diccionarios
     return conn
 
-@app.get("/")
+# --- RUTAS PARA LA WEB ---
+@app.get("/", response_class=HTMLResponse)
 def home():
-    return {"mensaje": "API Move Travel con SQLite - Datos Persistentes 💾"}
+    with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin():
+    with open("admin.html", "r", encoding="utf-8") as f:
+        return f.read()
 
 @app.get("/viajes", response_model=List[Viaje])
 def obtener_viajes(pais: Optional[str] = None, precio_max: Optional[float] = None):
@@ -132,3 +139,6 @@ def borrar_viaje(viaje_id: int):
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
     
     return {"mensaje": "Viaje eliminado correctamente"}
+
+#    .\venv\Scripts\activate
+#    uvicorn main:app --reload
