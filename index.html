@@ -14,7 +14,7 @@
 
     <header class="relative h-[500px] flex items-center justify-center overflow-hidden bg-gray-900">
         <video autoplay loop muted playsinline class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover opacity-60">
-            <source src="banner.mp4" type="video/mp4">
+            <source src="{{ url_for('static', filename='img/banner.mp4') }}" type="video/mp4">
         </video>
         
         <div class="relative z-20 text-center text-white px-4 animate-fade-in-down">
@@ -70,27 +70,21 @@
             const pais = document.getElementById('filtroPais').value;
             const precio = document.getElementById('filtroPrecio').value;
 
-            // Construimos la URL con los filtros
             let url = `${API_URL}?`;
-            if (pais) url += `pais=${pais}&`; // Envia lo que escribiste
+            if (pais) url += `pais=${pais}&`;
             if (precio) url += `precio_max=${precio}`;
 
             try {
                 const respuesta = await fetch(url);
-                
-                if (!respuesta.ok) {
-                    throw new Error("Error conectando con el servidor");
-                }
-
+                if (!respuesta.ok) throw new Error("Error conectando con el servidor");
                 const viajes = await respuesta.json();
                 mostrarViajes(viajes);
-
             } catch (error) {
                 console.error("Error:", error);
                 document.getElementById('contenedorViajes').innerHTML = `
                     <div class="col-span-full text-center p-10 bg-red-50 rounded-lg border border-red-200">
                         <p class="text-red-600 font-bold text-lg">⚠️ No se pudo conectar con el sistema.</p>
-                        <p class="text-red-400 text-sm mt-2">Asegúrate de que la terminal negra (uvicorn) esté corriendo sin errores.</p>
+                        <p class="text-red-400 text-sm mt-2">Verifica que tu app.py esté corriendo.</p>
                     </div>`;
             }
         }
@@ -98,29 +92,29 @@
         // --- FUNCIÓN PARA DIBUJAR TARJETAS ---
         function mostrarViajes(listaViajes) {
             const contenedor = document.getElementById('contenedorViajes');
-            contenedor.innerHTML = ''; // Limpiar resultados anteriores
+            contenedor.innerHTML = ''; 
 
-            // Si no hay resultados
             if (listaViajes.length === 0) {
                 contenedor.innerHTML = `
                     <div class="col-span-full text-center py-16 bg-white rounded-xl shadow-sm border border-dashed border-gray-300">
                         <p class="text-2xl text-gray-300 mb-2">✈️</p>
                         <p class="text-xl text-gray-500 font-medium">No encontramos viajes con ese criterio.</p>
-                        <p class="text-sm text-gray-400 mt-2">Intenta buscar por país (ej: "Brasil") o aumenta el presupuesto.</p>
                     </div>`;
                 return;
             }
 
-            // Si hay resultados, crear tarjeta por tarjeta
             listaViajes.forEach(viaje => {
-                // Generar enlace de WhatsApp dinámico
+                // Link de WhatsApp
                 const mensajeWsp = `Hola Move Travel, vi en su web el viaje a *${viaje.destino}* por $${viaje.precio_usd}. Me gustaría más info.`;
                 const linkWsp = `https://wa.me/595985000000?text=${encodeURIComponent(mensajeWsp)}`;
+
+                // Link interno a la página de detalles
+                const linkDetalle = `/viaje/${viaje.id}`;
 
                 const tarjeta = `
                     <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300 border border-gray-100 group flex flex-col h-full">
                         
-                        <div class="relative overflow-hidden h-56">
+                        <a href="${linkDetalle}" class="block relative overflow-hidden h-56 cursor-pointer">
                             <img src="${viaje.imagen_url || 'https://via.placeholder.com/400x300?text=Sin+Imagen'}" 
                                  alt="${viaje.destino}" 
                                  class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
@@ -128,11 +122,13 @@
                             <div class="absolute top-3 right-3 bg-white/90 backdrop-blur text-gray-800 text-xs font-bold px-3 py-1 rounded-full shadow-md">
                                 ⏱️ ${viaje.duracion_dias} Días
                             </div>
-                        </div>
+                        </a>
 
                         <div class="p-6 flex-1 flex flex-col">
                             <div class="mb-4">
-                                <h3 class="text-2xl font-bold text-gray-800 leading-tight">${viaje.destino}</h3>
+                                <a href="${linkDetalle}" class="hover:text-blue-600 transition">
+                                    <h3 class="text-2xl font-bold text-gray-800 leading-tight">${viaje.destino}</h3>
+                                </a>
                                 <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider bg-blue-50 px-2 py-1 rounded mt-1 inline-block">
                                     ${viaje.pais}
                                 </span>
@@ -148,16 +144,22 @@
                                     : '<span class="flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-100 px-2 py-1 rounded">🚌 Viaje en Bus</span>'}
                             </div>
 
-                            <div class="flex justify-between items-center mt-auto">
-                                <div>
+                            <div class="mt-auto">
+                                <div class="mb-3">
                                     <span class="block text-xs text-gray-400">Precio x Persona</span>
                                     <span class="text-3xl font-bold text-gray-800">$${viaje.precio_usd}</span>
                                 </div>
-                                <a href="${linkWsp}" target="_blank" 
-                                   class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg transition flex items-center gap-2">
-                                    <span>Consultar</span>
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.463 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                                </a>
+                                
+                                <div class="flex gap-2">
+                                    <a href="${linkDetalle}" 
+                                       class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition text-center text-sm flex items-center justify-center">
+                                       Ver Detalles
+                                    </a>
+                                    <a href="${linkWsp}" target="_blank" 
+                                       class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition text-center text-sm flex items-center justify-center gap-1">
+                                       <span>WhatsApp</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -166,12 +168,9 @@
             });
         }
 
-        // --- ACTIVADORES DE BÚSQUEDA AUTOMÁTICA ---
-        // Escuchamos el evento 'input': Cada vez que tocas una tecla, se ejecuta esto:
         document.getElementById('filtroPais').addEventListener('input', buscarViajes);
         document.getElementById('filtroPrecio').addEventListener('input', buscarViajes);
 
-        // Cargar viajes al entrar
         buscarViajes();
     </script>
 </body>

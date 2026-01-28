@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto mt-10 px-4">
+    <a href="/" class="text-blue-500 hover:underline mb-4 inline-block">← Volver al inicio</a>
+    
+    <div class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+        <div class="md:w-1/2">
+            <img src="{{ viaje['imagen_url'] }}" 
+                 onerror="this.src='https://via.placeholder.com/800x600?text=Sin+Imagen'"
+                 alt="{{ viaje['destino'] }}" 
+                 class="w-full h-full object-cover">
+        </div>
+        
+        <div class="p-8 md:w-1/2 flex flex-col justify-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ viaje['destino'] }}</h1>
+            <h3 class="text-xl text-blue-600 font-semibold mb-6">{{ viaje['pais'] }}</h3>
+            
+            <p class="text-gray-600 text-lg mb-6">{{ viaje['descripcion'] }}</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <span class="block text-gray-400 text-sm">Duración</span>
+                    <span class="font-bold text-xl">{{ viaje['duracion_dias'] }} Días</span>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <span class="block text-gray-400 text-sm">Precio</span>
+                    <span class="font-bold text-xl text-green-600">${{ viaje['precio_usd'] }}</span>
+                </div>
+            </div>
+
+            <a href="https://wa.me/595985000000?text=Hola, quiero reservar el viaje a {{ viaje['destino'] }}" 
+               target="_blank" 
+               class="block w-full bg-green-500 text-white text-center font-bold py-4 rounded-lg hover:bg-green-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                Solicitar Reserva por WhatsApp
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

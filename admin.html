@@ -3,77 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin - Move Travel</title>
+    <title>Admin - Move Travel</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-800 text-white font-sans p-10">
+<body class="bg-gray-900 text-white font-sans p-8">
 
-    <div class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold">🛠️ Panel de Control</h1>
-            <a href="index.html" class="text-blue-400 hover:text-blue-300">← Volver a la Web</a>
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-4xl font-bold text-blue-400">Panel de Control 🛠️</h1>
+            <a href="/" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded transition">← Volver a la Web</a>
         </div>
 
-        <div class="bg-gray-700 p-6 rounded-lg shadow-xl mb-10">
-            <h2 class="text-xl font-bold mb-4 text-green-400">Agregar Nuevo Viaje</h2>
-            <form id="formViaje" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 bg-gray-800 p-6 rounded-xl shadow-lg h-fit sticky top-4">
+                <h2 id="tituloForm" class="text-xl font-bold mb-4 text-green-400 border-b border-gray-700 pb-2">Agregar Nuevo Viaje</h2>
                 
-                <input type="text" id="destino" placeholder="Destino (ej: Cancún)" class="bg-gray-600 p-2 rounded border border-gray-500" required>
-                <input type="text" id="pais" placeholder="País" class="bg-gray-600 p-2 rounded border border-gray-500" required>
-                
-                <input type="number" id="precio" placeholder="Precio USD" class="bg-gray-600 p-2 rounded border border-gray-500" required>
-                <input type="number" id="dias" placeholder="Duración (días)" class="bg-gray-600 p-2 rounded border border-gray-500" required>
-                
-                <input type="text" id="imagen" placeholder="URL de la Foto (ej: https://...)" class="bg-gray-600 p-2 rounded border border-gray-500 col-span-2">
-                <textarea id="desc" placeholder="Descripción vendedora..." class="bg-gray-600 p-2 rounded border border-gray-500 col-span-2" rows="3"></textarea>
+                <form id="formViaje" class="flex flex-col gap-3">
+                    <input type="hidden" id="idViaje"> <label class="text-xs text-gray-400 uppercase">Destino</label>
+                    <input type="text" id="destino" placeholder="Ej: Cancún" class="bg-gray-700 p-3 rounded text-white border border-gray-600 outline-none" required>
+                    
+                    <label class="text-xs text-gray-400 uppercase">País</label>
+                    <input type="text" id="pais" placeholder="País" class="bg-gray-700 p-3 rounded text-white border border-gray-600 outline-none" required>
+                    
+                    <div class="flex gap-2">
+                        <div class="w-1/2">
+                            <label class="text-xs text-gray-400 uppercase">Precio ($)</label>
+                            <input type="number" id="precio" placeholder="0.00" class="bg-gray-700 p-3 rounded text-white border border-gray-600 w-full outline-none" required>
+                        </div>
+                        <div class="w-1/2">
+                            <label class="text-xs text-gray-400 uppercase">Días</label>
+                            <input type="number" id="dias" placeholder="7" class="bg-gray-700 p-3 rounded text-white border border-gray-600 w-full outline-none" required>
+                        </div>
+                    </div>
+                    
+                    <label class="text-xs text-gray-400 uppercase">Descripción</label>
+                    <textarea id="desc" placeholder="Descripción corta..." class="bg-gray-700 p-3 rounded text-white border border-gray-600 outline-none" rows="3"></textarea>
+                    
+                    <label class="text-xs text-gray-400 uppercase">Imagen URL</label>
+                    <input type="text" id="imagen" placeholder="https://..." class="bg-gray-700 p-3 rounded text-white border border-gray-600 outline-none text-sm">
+                    
+                    <div class="flex items-center gap-2 mt-2 bg-gray-700/50 p-2 rounded cursor-pointer" onclick="document.getElementById('aereo').click()">
+                        <input type="checkbox" id="aereo" class="w-4 h-4 text-green-500 cursor-pointer">
+                        <label class="text-sm text-gray-300 cursor-pointer">Incluye Aéreo ✈️</label>
+                    </div>
 
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="aereo" class="w-5 h-5">
-                    <label>Incluye Vuelo ✈️</label>
-                </div>
-
-                <button type="submit" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded col-span-2">
-                    Guardar Viaje
-                </button>
-            </form>
-        </div>
-
-        <h2 class="text-xl font-bold mb-4 text-yellow-400">Inventario Actual</h2>
-        <div id="listaAdmin" class="space-y-3">
+                    <div class="flex gap-2 mt-4">
+                        <button type="submit" id="btnGuardar" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded transition shadow-lg">
+                            💾 Guardar Viaje
+                        </button>
+                        <button type="button" id="btnCancelar" onclick="resetearFormulario()" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded transition">
+                            ❌
+                        </button>
+                    </div>
+                </form>
             </div>
+
+            <div class="lg:col-span-2">
+                <h2 class="text-xl font-bold mb-4 text-yellow-400 border-b border-gray-700 pb-2">Inventario Actual</h2>
+                <div id="listaAdmin" class="flex flex-col gap-4">
+                    <p class="text-gray-500">Cargando viajes...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const API_URL = "/viajes";
+        const API_URL = "/viajes"; 
+        let listaGlobalViajes = [];
 
-        // 1. CARGAR LISTA
+        // 1. CARGAR VIAJES
         async function cargarViajes() {
-            const res = await fetch(API_URL);
-            const viajes = await res.json();
+            try {
+                const res = await fetch(API_URL);
+                if(!res.ok) throw new Error("Error cargando datos");
+                listaGlobalViajes = await res.json();
+                renderizarLista();
+            } catch (error) {
+                console.error(error);
+                document.getElementById('listaAdmin').innerHTML = `<p class='text-red-400'>Error de conexión. Asegúrate de estar en el puerto 8000.</p>`;
+            }
+        }
+
+        // 2. DIBUJAR LA LISTA
+        function renderizarLista() {
             const contenedor = document.getElementById('listaAdmin');
             contenedor.innerHTML = '';
 
-            viajes.forEach(v => {
+            if (listaGlobalViajes.length === 0) {
+                contenedor.innerHTML = "<p class='text-gray-500'>No hay viajes registrados aún.</p>";
+                return;
+            }
+
+            listaGlobalViajes.slice().reverse().forEach(v => {
                 contenedor.innerHTML += `
-                    <div class="bg-gray-600 p-4 rounded flex justify-between items-center">
-                        <div>
-                            <span class="font-bold text-lg">${v.destino}</span> 
-                            <span class="text-sm text-gray-300">(${v.pais}) - $${v.precio_usd}</span>
+                    <div class="bg-gray-800 p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center shadow border border-gray-700 hover:border-gray-500 transition">
+                        <img src="${v.imagen_url}" class="w-full md:w-24 h-24 rounded object-cover bg-gray-700">
+                        <div class="flex-1 text-center md:text-left">
+                            <h3 class="font-bold text-lg text-white">${v.destino} <span class="text-sm font-normal text-gray-400">(${v.pais})</span></h3>
+                            <div class="mt-1">
+                                <span class="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded">${v.duracion_dias} días</span>
+                                <span class="font-bold text-green-400 ml-2">$${v.precio_usd}</span>
+                            </div>
                         </div>
-                        <button onclick="borrarViaje(${v.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                            Eliminar 🗑️
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="prepararEdicion(${v.id})" class="bg-yellow-600 hover:bg-yellow-500 text-white p-2 rounded flex items-center gap-1 text-sm font-bold">
+                                ✏️ Editar
+                            </button>
+                            <button onclick="borrarViaje(${v.id})" class="bg-red-600 hover:bg-red-500 text-white p-2 rounded flex items-center gap-1 text-sm font-bold">
+                                🗑️ Borrar
+                            </button>
+                        </div>
                     </div>
                 `;
             });
         }
 
-        // 2. GUARDAR NUEVO (POST)
-        document.getElementById('formViaje').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Evita que se recargue la página
+        // 3. EDITAR
+        function prepararEdicion(id) {
+            const viaje = listaGlobalViajes.find(v => v.id === id);
+            if (!viaje) return;
 
-            const nuevoViaje = {
-                id: 0, // El servidor lo asignará
+            document.getElementById('idViaje').value = viaje.id;
+            document.getElementById('destino').value = viaje.destino;
+            document.getElementById('pais').value = viaje.pais;
+            document.getElementById('precio').value = viaje.precio_usd;
+            document.getElementById('dias').value = viaje.duracion_dias;
+            document.getElementById('desc').value = viaje.descripcion;
+            document.getElementById('imagen').value = viaje.imagen_url;
+            document.getElementById('aereo').checked = viaje.incluye_aereo;
+
+            // Cambiar Botones
+            document.getElementById('tituloForm').innerText = "Editando: " + viaje.destino;
+            document.getElementById('tituloForm').className = "text-xl font-bold mb-4 text-yellow-400 border-b border-gray-700 pb-2";
+            document.getElementById('btnGuardar').innerText = "🔄 Actualizar Viaje";
+            document.getElementById('btnGuardar').className = "flex-1 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded transition shadow-lg";
+            document.getElementById('btnCancelar').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetearFormulario() {
+            document.getElementById('formViaje').reset();
+            document.getElementById('idViaje').value = "";
+            document.getElementById('tituloForm').innerText = "Agregar Nuevo Viaje";
+            document.getElementById('tituloForm').className = "text-xl font-bold mb-4 text-green-400 border-b border-gray-700 pb-2";
+            document.getElementById('btnGuardar').innerText = "💾 Guardar Viaje";
+            document.getElementById('btnGuardar').className = "flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded transition shadow-lg";
+            document.getElementById('btnCancelar').classList.add('hidden');
+        }
+
+        // 4. ENVIAR FORMULARIO
+        document.getElementById('formViaje').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('idViaje').value;
+            const esEdicion = id !== "";
+            const metodo = esEdicion ? "PUT" : "POST";
+            const urlFinal = esEdicion ? `${API_URL}/${id}` : API_URL;
+
+            const datos = {
                 destino: document.getElementById('destino').value,
                 pais: document.getElementById('pais').value,
                 precio_usd: parseFloat(document.getElementById('precio').value),
@@ -83,30 +170,29 @@
                 imagen_url: document.getElementById('imagen').value || "https://via.placeholder.com/400"
             };
 
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(nuevoViaje)
-            });
-
-            if (res.ok) {
-                alert("¡Viaje creado!");
-                document.getElementById('formViaje').reset();
-                cargarViajes(); // Recargar la lista
-            } else {
-                alert("Error al guardar");
-            }
+            try {
+                const res = await fetch(urlFinal, {
+                    method: metodo,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(datos)
+                });
+                if (res.ok) {
+                    resetearFormulario();
+                    cargarViajes();
+                    alert(esEdicion ? "Actualizado correctamente" : "Creado correctamente");
+                } else {
+                    alert("Error: Revisa usuario/clave");
+                }
+            } catch (error) { alert("Error de conexión"); }
         });
 
-        // 3. BORRAR (DELETE)
+        // 5. BORRAR
         async function borrarViaje(id) {
-            if(!confirm("¿Seguro que quieres borrar este viaje?")) return;
-
-            const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-            if (res.ok) cargarViajes();
+            if(!confirm("¿Eliminar viaje definitivamente?")) return;
+            await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+            cargarViajes();
         }
 
-        // Iniciar
         cargarViajes();
     </script>
 </body>

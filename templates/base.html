@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Move Travel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+    <nav class="bg-gray-900 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold flex items-center gap-2">
+                Move Travel ✈️
+            </a>
+            <ul class="flex gap-6 text-sm font-medium">
+                <li><a href="/" class="hover:text-blue-400 transition">Inicio</a></li>
+                <li><a href="#" class="hover:text-blue-400 transition">Contacto</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="flex-grow">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-auto">
+        <div class="container mx-auto text-center">
+            <p class="text-sm opacity-60">&copy; 2026 Move Travel - Agencia de Viajes</p>
+        </div>
+    </footer>
+
+</body>
+</html>

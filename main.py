@@ -1,28 +1,24 @@
 import sqlite3
-import secrets # Librería para comparar contraseñas de forma segura
+import secrets
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials # Herramientas de seguridad
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from typing import List, Optional
 
 app = FastAPI()
 
-# --- CONFIGURACIÓN DE SEGURIDAD ---
+# --- 1. SEGURIDAD ---
 security = HTTPBasic()
-
-# Define aquí tu usuario y contraseña MAESTROS
 USUARIO_ADMIN = "admin"
-PASSWORD_ADMIN = "viajes2026"  # ¡Cámbialo por lo que quieras!
+PASSWORD_ADMIN = "viajes2026"
 
 def validar_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    """Esta función es el PORTERO. Verifica si las credenciales son correctas."""
-    user_ok = secrets.compare_digest(credentials.username, USUARIO_ADMIN)
-    pass_ok = secrets.compare_digest(credentials.password, PASSWORD_ADMIN)
+    is_user_ok = secrets.compare_digest(credentials.username, USUARIO_ADMIN)
+    is_pass_ok = secrets.compare_digest(credentials.password, PASSWORD_ADMIN)
     
-    if not (user_ok and pass_ok):
-        # Si falla, lanza un error 401 (No autorizado) y pide login de nuevo
+    if not (is_user_ok and is_pass_ok):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
@@ -30,7 +26,7 @@ def validar_admin(credentials: HTTPBasicCredentials = Depends(security)):
         )
     return credentials.username
 
-# --- CONFIGURACIÓN DE PERMISOS ---
+# --- 2. CONFIGURACIÓN ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,7 +35,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- BASE DE DATOS ---
 DB_NAME = "move_travel.db"
 
 def get_db_connection():
@@ -67,7 +62,6 @@ def iniciar_db():
 
 iniciar_db()
 
-# --- MODELO DE DATOS ---
 class Viaje(BaseModel):
     id: Optional[int] = None
     destino: str
@@ -78,23 +72,28 @@ class Viaje(BaseModel):
     descripcion: str
     imagen_url: Optional[str] = "https://via.placeholder.com/400"
 
-# --- RUTAS (ENDPOINTS) ---
+# --- 3. RUTAS (PÁGINAS WEB) ---
 
-# 1. RUTA PÚBLICA (Cualquiera puede entrar)
 @app.get("/", response_class=HTMLResponse)
 def home():
-    with open("index.html", "r", encoding="utf-8") as f: # O "inicio.html" si le cambiaste el nombre
-        return f.read()
+    # Intenta abrir el archivo. Si falla, avisa en la terminal.
+    try:
+        with open("templates/index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<h1>Error: No encuentro el archivo index.html</h1>"
 
-# 2. RUTA PROTEGIDA: EL PANEL DE ADMIN (Solo con contraseña)
-# Fíjate en el "dependencies=[Depends(validar_admin)]" -> Eso es el candado 🔒
 @app.get("/admin", response_class=HTMLResponse, dependencies=[Depends(validar_admin)])
 def admin():
-    with open("admin.html", "r", encoding="utf-8") as f: # O "panel.html"
-        return f.read()
+    try:
+        with open("templates/admin.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<h1>Error: No encuentro el archivo admin.html</h1>"
 
-# 3. RUTA PÚBLICA: VER VIAJES (Los clientes deben poder ver esto sin clave)
-@app.get("/viajes", response_class=List[Viaje]) # Quitamos response_model temporalmente para evitar conflictos de tipo simples
+# --- 4. RUTAS (API DE DATOS) ---
+
+@app.get("/viajes")
 def obtener_viajes(pais: Optional[str] = None, precio_max: Optional[float] = None):
     conn = get_db_connection()
     query = "SELECT * FROM viajes WHERE 1=1"
@@ -102,9 +101,8 @@ def obtener_viajes(pais: Optional[str] = None, precio_max: Optional[float] = Non
 
     if pais:
         query += " AND (lower(pais) LIKE ? OR lower(destino) LIKE ?)"
-        termino = f"%{pais.lower()}%"
-        params.append(termino)
-        params.append(termino)
+        term = f"%{pais.lower()}%"
+        params.extend([term, term])
     
     if precio_max:
         query += " AND precio_usd <= ?"
@@ -115,7 +113,6 @@ def obtener_viajes(pais: Optional[str] = None, precio_max: Optional[float] = Non
     conn.close()
     return viajes
 
-# 4. RUTA PROTEGIDA: CREAR VIAJE 🔒
 @app.post("/viajes", dependencies=[Depends(validar_admin)])
 def crear_viaje(viaje: Viaje):
     conn = get_db_connection()
@@ -125,26 +122,14 @@ def crear_viaje(viaje: Viaje):
         (viaje.destino, viaje.pais, viaje.precio_usd, viaje.duracion_dias, viaje.incluye_aereo, viaje.descripcion, viaje.imagen_url)
     )
     conn.commit()
-    nuevo_id = c.lastrowid
+    viaje.id = c.lastrowid
     conn.close()
-    viaje.id = nuevo_id
     return viaje
 
-# 5. RUTA PROTEGIDA: BORRAR VIAJE 🔒
-@app.delete("/viajes/{viaje_id}", dependencies=[Depends(validar_admin)])
-def borrar_viaje(viaje_id: int):
+@app.put("/viajes/{viaje_id}", dependencies=[Depends(validar_admin)])
+def actualizar_viaje(viaje_id: int, viaje_actualizado: Viaje):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM viajes WHERE id = ?", (viaje_id,))
-    conn.commit()
-    filas = c.rowcount
-    conn.close()
-
-    if filas == 0:
-        raise HTTPException(status_code=404, detail="Viaje no encontrado")
-    
-    return {"mensaje": "Eliminado"}
-
-
+    c.execute
 #    .\venv\Scripts\activate
 #    uvicorn main:app --reload
