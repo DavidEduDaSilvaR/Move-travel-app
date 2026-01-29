@@ -1,40 +1,99 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Viaje - Move Travel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
 
-{% block content %}
-<div class="container mx-auto mt-10 px-4">
-    <a href="/" class="text-blue-500 hover:underline mb-4 inline-block">← Volver al inicio</a>
-    
-    <div class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
-        <div class="md:w-1/2">
-            <img src="{{ viaje['imagen_url'] }}" 
-                 onerror="this.src='https://via.placeholder.com/800x600?text=Sin+Imagen'"
-                 alt="{{ viaje['destino'] }}" 
-                 class="w-full h-full object-cover">
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto">
+        <div class="text-2xl font-bold tracking-tighter">
+            Move Travel <span class="text-blue-500">✈️</span>
         </div>
+        <a href="/" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded transition">← Volver</a>
+    </nav>
+
+    <div class="max-w-4xl mx-auto mt-10 p-6">
+        <div id="loading" class="text-center text-gray-400">Cargando detalles... ⏳</div>
         
-        <div class="p-8 md:w-1/2 flex flex-col justify-center">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ viaje['destino'] }}</h1>
-            <h3 class="text-xl text-blue-600 font-semibold mb-6">{{ viaje['pais'] }}</h3>
+        <div id="contenidoViaje" class="hidden bg-gray-800 rounded-xl overflow-hidden shadow-2xl border border-gray-700">
+            <img id="imgViaje" src="" class="w-full h-80 object-cover">
             
-            <p class="text-gray-600 text-lg mb-6">{{ viaje['descripcion'] }}</p>
-            
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="bg-gray-50 p-4 rounded-lg text-center">
-                    <span class="block text-gray-400 text-sm">Duración</span>
-                    <span class="font-bold text-xl">{{ viaje['duracion_dias'] }} Días</span>
+            <div class="p-8">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 id="titulo" class="text-4xl font-bold text-white mb-2"></h1>
+                        <p id="pais" class="text-xl text-blue-400 font-medium"></p>
+                    </div>
+                    <div class="text-right">
+                        <span id="precio" class="block text-4xl font-bold text-green-400"></span>
+                        <span id="dias" class="block text-gray-400 text-sm mt-1"></span>
+                    </div>
                 </div>
-                <div class="bg-gray-50 p-4 rounded-lg text-center">
-                    <span class="block text-gray-400 text-sm">Precio</span>
-                    <span class="font-bold text-xl text-green-600">${{ viaje['precio_usd'] }}</span>
+
+                <hr class="border-gray-700 my-6">
+
+                <h3 class="text-lg font-bold text-yellow-400 mb-2">Sobre este destino:</h3>
+                <p id="desc" class="text-gray-300 leading-relaxed text-lg"></p>
+
+                <div id="aereoBox" class="mt-6 inline-block bg-blue-900/30 text-blue-200 px-4 py-2 rounded border border-blue-800 hidden">
+                    ✈️ Incluye Pasajes Aéreos
+                </div>
+
+                <div class="mt-10">
+                    <a href="https://wa.me/595985322923?text=Hola,%20me%20interesa%20el%20viaje%20a..." target="_blank" 
+                       class="block w-full bg-green-600 hover:bg-green-500 text-white text-center font-bold py-4 rounded-lg text-xl transition shadow-lg hover:shadow-green-900/50">
+                        📲 Consultar por WhatsApp
+                    </a>
                 </div>
             </div>
-
-            <a href="https://wa.me/595985000000?text=Hola, quiero reservar el viaje a {{ viaje['destino'] }}" 
-               target="_blank" 
-               class="block w-full bg-green-500 text-white text-center font-bold py-4 rounded-lg hover:bg-green-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                Solicitar Reserva por WhatsApp
-            </a>
         </div>
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        // 1. Obtener el ID de la URL (ej: detalle.html?id=5)
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+
+        async function cargarDetalle() {
+            if (!id) {
+                document.getElementById('loading').innerText = "❌ Error: No se especificó ningún viaje.";
+                return;
+            }
+
+            try {
+                // 2. Pedir datos a la API
+                const res = await fetch(`/viajes/${id}`);
+                
+                if (!res.ok) throw new Error("Viaje no encontrado");
+                
+                const v = await res.json();
+
+                // 3. Rellenar la página
+                document.getElementById('imgViaje').src = v.imagen_url;
+                document.getElementById('titulo').innerText = v.destino;
+                document.getElementById('pais').innerText = v.pais;
+                document.getElementById('precio').innerText = `$${v.precio_usd}`;
+                document.getElementById('dias').innerText = `${v.duracion_dias} días de duración`;
+                document.getElementById('desc').innerText = v.descripcion;
+
+                if(v.incluye_aereo) {
+                    document.getElementById('aereoBox').classList.remove('hidden');
+                }
+
+                // Mostrar todo y ocultar cargando
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('contenidoViaje').classList.remove('hidden');
+
+            } catch (error) {
+                document.getElementById('loading').innerText = "❌ No pudimos cargar el viaje. Intenta más tarde.";
+                console.error(error);
+            }
+        }
+
+        cargarDetalle();
+    </script>
+</body>
+</html>

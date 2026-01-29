@@ -20,7 +20,9 @@
                 <h2 id="tituloForm" class="text-xl font-bold mb-4 text-green-400 border-b border-gray-700 pb-2">Agregar Nuevo Viaje</h2>
                 
                 <form id="formViaje" class="flex flex-col gap-3">
-                    <input type="hidden" id="idViaje"> <label class="text-xs text-gray-400 uppercase">Destino</label>
+                    <input type="hidden" id="idViaje"> 
+
+                    <label class="text-xs text-gray-400 uppercase">Destino</label>
                     <input type="text" id="destino" placeholder="Ej: Cancún" class="bg-gray-700 p-3 rounded text-white border border-gray-600 outline-none" required>
                     
                     <label class="text-xs text-gray-400 uppercase">País</label>
@@ -62,7 +64,7 @@
             <div class="lg:col-span-2">
                 <h2 class="text-xl font-bold mb-4 text-yellow-400 border-b border-gray-700 pb-2">Inventario Actual</h2>
                 <div id="listaAdmin" class="flex flex-col gap-4">
-                    <p class="text-gray-500">Cargando viajes...</p>
+                    <p class="text-gray-500">Cargando...</p>
                 </div>
             </div>
         </div>
@@ -70,56 +72,51 @@
 
     <script>
         const API_URL = "/viajes"; 
+        const AUTH_HEADER = "Basic " + btoa("admin:viajes2026");
+
         let listaGlobalViajes = [];
 
-        // 1. CARGAR VIAJES
+        // 1. CARGAR
         async function cargarViajes() {
             try {
-                const res = await fetch(API_URL);
-                if(!res.ok) throw new Error("Error cargando datos");
+                // Truco del Timestamp para evitar caché
+                const res = await fetch(API_URL + "?t=" + Date.now());
+                if(!res.ok) throw new Error("Error al cargar");
                 listaGlobalViajes = await res.json();
                 renderizarLista();
             } catch (error) {
                 console.error(error);
-                document.getElementById('listaAdmin').innerHTML = `<p class='text-red-400'>Error de conexión. Asegúrate de estar en el puerto 8000.</p>`;
+                document.getElementById('listaAdmin').innerHTML = "<p class='text-red-400'>Error de conexión.</p>";
             }
         }
 
-        // 2. DIBUJAR LA LISTA
         function renderizarLista() {
             const contenedor = document.getElementById('listaAdmin');
             contenedor.innerHTML = '';
-
-            if (listaGlobalViajes.length === 0) {
-                contenedor.innerHTML = "<p class='text-gray-500'>No hay viajes registrados aún.</p>";
-                return;
-            }
+            if (listaGlobalViajes.length === 0) contenedor.innerHTML = "<p>No hay viajes.</p>";
 
             listaGlobalViajes.slice().reverse().forEach(v => {
                 contenedor.innerHTML += `
-                    <div class="bg-gray-800 p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center shadow border border-gray-700 hover:border-gray-500 transition">
-                        <img src="${v.imagen_url}" class="w-full md:w-24 h-24 rounded object-cover bg-gray-700">
+                    <div class="bg-gray-800 p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center shadow border border-gray-700">
+                        <img src="${v.imagen_url}" class="w-full md:w-24 h-24 rounded object-cover bg-gray-700" onerror="this.src='https://via.placeholder.com/150'">
                         <div class="flex-1 text-center md:text-left">
                             <h3 class="font-bold text-lg text-white">${v.destino} <span class="text-sm font-normal text-gray-400">(${v.pais})</span></h3>
+                            <p class="text-gray-400 text-sm italic mt-1 line-clamp-2">${v.descripcion}</p>
                             <div class="mt-1">
                                 <span class="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded">${v.duracion_dias} días</span>
                                 <span class="font-bold text-green-400 ml-2">$${v.precio_usd}</span>
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="prepararEdicion(${v.id})" class="bg-yellow-600 hover:bg-yellow-500 text-white p-2 rounded flex items-center gap-1 text-sm font-bold">
-                                ✏️ Editar
-                            </button>
-                            <button onclick="borrarViaje(${v.id})" class="bg-red-600 hover:bg-red-500 text-white p-2 rounded flex items-center gap-1 text-sm font-bold">
-                                🗑️ Borrar
-                            </button>
+                            <button onclick="prepararEdicion(${v.id})" class="bg-yellow-600 hover:bg-yellow-500 text-white p-2 rounded text-sm font-bold">✏️ Editar</button>
+                            <button onclick="borrarViaje(${v.id})" class="bg-red-600 hover:bg-red-500 text-white p-2 rounded text-sm font-bold">🗑️ Borrar</button>
                         </div>
                     </div>
                 `;
             });
         }
 
-        // 3. EDITAR
+        // 2. PREPARAR EDICIÓN
         function prepararEdicion(id) {
             const viaje = listaGlobalViajes.find(v => v.id === id);
             if (!viaje) return;
@@ -137,7 +134,7 @@
             document.getElementById('tituloForm').innerText = "Editando: " + viaje.destino;
             document.getElementById('tituloForm').className = "text-xl font-bold mb-4 text-yellow-400 border-b border-gray-700 pb-2";
             document.getElementById('btnGuardar').innerText = "🔄 Actualizar Viaje";
-            document.getElementById('btnGuardar').className = "flex-1 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded transition shadow-lg";
+            document.getElementById('btnGuardar').className = "flex-1 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded shadow-lg";
             document.getElementById('btnCancelar').classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -148,13 +145,14 @@
             document.getElementById('tituloForm').innerText = "Agregar Nuevo Viaje";
             document.getElementById('tituloForm').className = "text-xl font-bold mb-4 text-green-400 border-b border-gray-700 pb-2";
             document.getElementById('btnGuardar').innerText = "💾 Guardar Viaje";
-            document.getElementById('btnGuardar').className = "flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded transition shadow-lg";
+            document.getElementById('btnGuardar').className = "flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded shadow-lg";
             document.getElementById('btnCancelar').classList.add('hidden');
         }
 
-        // 4. ENVIAR FORMULARIO
+        // 3. ENVIAR (GUARDAR O ACTUALIZAR)
         document.getElementById('formViaje').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const id = document.getElementById('idViaje').value;
             const esEdicion = id !== "";
             const metodo = esEdicion ? "PUT" : "POST";
@@ -173,24 +171,34 @@
             try {
                 const res = await fetch(urlFinal, {
                     method: metodo,
-                    headers: { "Content-Type": "application/json" },
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": AUTH_HEADER 
+                    },
                     body: JSON.stringify(datos)
                 });
+
                 if (res.ok) {
-                    resetearFormulario();
-                    cargarViajes();
-                    alert(esEdicion ? "Actualizado correctamente" : "Creado correctamente");
+                    alert("✅ ¡Operación Exitosa!");
+                    // RECARGA FORZOSA PARA VER EL CAMBIO
+                    window.location.reload(); 
                 } else {
-                    alert("Error: Revisa usuario/clave");
+                    const errorTxt = await res.text();
+                    alert("❌ Error: " + res.status + " " + errorTxt);
                 }
-            } catch (error) { alert("Error de conexión"); }
+            } catch (error) { 
+                alert("💀 Error grave: " + error); 
+            }
         });
 
-        // 5. BORRAR
+        // 4. BORRAR
         async function borrarViaje(id) {
-            if(!confirm("¿Eliminar viaje definitivamente?")) return;
-            await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-            cargarViajes();
+            if(!confirm("¿Seguro que quieres borrarlo?")) return;
+            await fetch(`${API_URL}/${id}`, { 
+                method: "DELETE",
+                headers: { "Authorization": AUTH_HEADER }
+            });
+            window.location.reload(); // Recarga forzosa
         }
 
         cargarViajes();
